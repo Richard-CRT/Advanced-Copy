@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace AdvancedCopy
 {
@@ -7,35 +9,97 @@ namespace AdvancedCopy
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Folder baseFolder = new Folder(@"C:\Users\richa\Documents\Programming\C#\AdvancedCopy", null);
+            Console.WriteLine();
+            baseFolder.Print();
 
-            Folder.RootPath = @"C:\Users\richa\Documents\Programming\C#";
-            Folder baseFolder = new Folder("AdvancedCopy", null);
+            Console.ReadLine();
         }
     }
 
     class Folder
     {
-        public static string RootPath;
-
-        public Folder Parent;
+        public Folder ParentFolder;
         public string Name;
+        public string FullPath;
 
-        public string Path
+        public Folder[] SubDirectories;
+        public File[] Files;
+
+        public bool Expanded = true;
+
+        public int Depth
         {
             get
             {
-                if (Parent != null)
-                    return Parent.Path + System.IO.Path.DirectorySeparatorChar + Name;
+                if (ParentFolder != null)
+                    return ParentFolder.Depth + 1;
                 else
-                    return RootPath + System.IO.Path.DirectorySeparatorChar + Name;
+                    return 0;
             }
         }
 
-        public Folder (string name, Folder parent)
+        public Folder (string _fullPath, Folder _parentFolder)
         {
-            this.Name = name;
-            this.Parent = parent;
+            this.Name = Path.GetFileName(_fullPath);
+            this.FullPath = _fullPath;
+            this.ParentFolder = _parentFolder;
+
+            Console.WriteLine($"{new String(' ', Depth * 3)}Parsing folder `{Name}`");
+            string[] filesFullPaths = Directory.GetFiles(this.FullPath);
+            Files = filesFullPaths.Select(x => new File(x, this)).ToArray();
+
+            string[] subdirectoryFullPaths = Directory.GetDirectories(this.FullPath);
+            SubDirectories = subdirectoryFullPaths.Select(x => new Folder(x, this)).ToArray();
+        }
+
+        public override string ToString()
+        {
+            return this.Name;
+        }
+
+        public void Print(int printDepth = 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"{new String(' ', printDepth * 3)}{(this.Expanded?'-':'+')} {this.Name}");
+            Console.ForegroundColor = ConsoleColor.White;
+            if (Expanded)
+            {
+                foreach (File file in this.Files)
+                {
+                    Console.WriteLine($"{new String(' ', printDepth * 3)}{file}");
+                }
+                foreach (Folder subdirectory in this.SubDirectories)
+                {
+                    subdirectory.Print(printDepth + 1);
+                }
+            }
+        }
+    }
+
+    class File
+    {
+        public Folder ParentFolder;
+        public string Name;
+        public string FullPath;
+
+        public int Depth
+        {
+            get { return ParentFolder.Depth + 1; }
+        }
+
+        public File(string _fullPath, Folder _parentFolder)
+        {
+            this.Name = Path.GetFileName(_fullPath);
+            this.FullPath = _fullPath;
+            this.ParentFolder = _parentFolder;
+
+            Console.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
+        }
+
+        public override string ToString()
+        {
+            return this.Name;
         }
     }
 }
