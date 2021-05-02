@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace AdvancedCopy
         {
             InitializeComponent();
 
-            Folder baseFolder = new Folder(@"C:\Users\richa\Documents\Programming\C#\AdvancedCopy", null);
+            Folder baseFolder = new Folder(Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory())))), null);
         }
 
     }
