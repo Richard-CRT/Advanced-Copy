@@ -1,14 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
 namespace FileSystemParser
 {
-    public abstract class FileSystemItem
+    public abstract partial class FileSystemItem
     {
         public Folder ParentFolder;
         public string Name;
         public string FullPath;
+        public bool Excluded = false;
+        public object TreeNode;
+        public abstract bool IsFolder
+        {
+            get;
+        }
 
         public int Depth
         {
@@ -21,55 +29,78 @@ namespace FileSystemParser
             }
         }
 
-        public override string ToString()
-        {
-            return this.Name;
-        }
-
-        public abstract bool IsFolder();
-    }
-
-    public class Folder : FileSystemItem
-    {
-        public Folder[] SubDirectories;
-        public File[] Files;
-
-        public bool Expanded = true;
-
-        public Folder(string _fullPath, Folder _parentFolder)
+        public FileSystemItem(string _fullPath, Folder _parentFolder)
         {
             this.Name = Path.GetFileName(_fullPath);
             this.FullPath = _fullPath;
             this.ParentFolder = _parentFolder;
-
-            Console.WriteLine($"{new String(' ', Depth * 3)}Parsing folder `{Name}`");
-            string[] filesFullPaths = Directory.GetFiles(this.FullPath);
-            Files = filesFullPaths.Select(x => new File(x, this)).ToArray();
-
-            string[] subdirectoryFullPaths = Directory.GetDirectories(this.FullPath);
-            SubDirectories = subdirectoryFullPaths.Select(x => new Folder(x, this)).ToArray();
         }
 
-        public override bool IsFolder()
+        public override string ToString()
         {
-            return true;
+            return this.Name;
+        }
+    }
+
+    public class Folder : FileSystemItem
+    {
+        public List<Folder> SubDirectories = new List<Folder>();
+        public List<File> Files = new List<File>();
+
+        public bool Enumerated;
+        public override bool IsFolder
+        {
+            get { return true; }
+        }
+
+        private bool IsSymbolic(string fullPath)
+        {
+            FileInfo pathInfo = new FileInfo(fullPath);
+            return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+        }
+
+        public Folder(string _fullPath, Folder _parentFolder) : base(_fullPath, _parentFolder)
+        {
+            Debug.WriteLine($"{new String(' ', Depth * 3)}Found folder `{Name}`");
+        }
+
+        public void Enumerate()
+        {
+            Debug.WriteLine($"{new String(' ', Depth * 3)}Enumerating folder `{Name}`");
+            string[] filesFullPaths = Directory.GetFiles(this.FullPath);
+            Files = new List<File>();
+            foreach (string fileFullPath in filesFullPaths)
+            {
+                Files.Add(new File(fileFullPath, this));
+            }
+
+            string[] subdirectoryFullPaths = Directory.GetDirectories(this.FullPath);
+            SubDirectories = new List<Folder>();
+            foreach (string subdirectoryFullPath in subdirectoryFullPaths)
+            {
+                if (Path.GetFileName(subdirectoryFullPath) != "$RECYCLE.BIN")
+                {
+                    if (!IsSymbolic(subdirectoryFullPath))
+                        SubDirectories.Add(new Folder(subdirectoryFullPath, this));
+                    else
+                        Files.Add(new File(subdirectoryFullPath, this));
+                }
+            }
+
+            this.Enumerated = true;
         }
     }
 
     public class File : FileSystemItem
     {
-        public File(string _fullPath, Folder _parentFolder)
+        public override bool IsFolder
         {
-            this.Name = Path.GetFileName(_fullPath);
-            this.FullPath = _fullPath;
-            this.ParentFolder = _parentFolder;
-
-            Console.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
+            get { return false; }
         }
 
-        public override bool IsFolder()
+        public File(string _fullPath, Folder _parentFolder) : base(_fullPath, _parentFolder)
         {
-            return false;
+            Debug.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
         }
     }
 }
