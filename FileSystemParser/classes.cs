@@ -4,16 +4,11 @@ using System.Linq;
 
 namespace FileSystemParser
 {
-    public class Folder
+    public abstract class FileSystemItem
     {
         public Folder ParentFolder;
         public string Name;
         public string FullPath;
-
-        public Folder[] SubDirectories;
-        public File[] Files;
-
-        public bool Expanded = true;
 
         public int Depth
         {
@@ -25,6 +20,21 @@ namespace FileSystemParser
                     return 0;
             }
         }
+
+        public override string ToString()
+        {
+            return this.Name;
+        }
+
+        public abstract bool IsFolder();
+    }
+
+    public class Folder : FileSystemItem
+    {
+        public Folder[] SubDirectories;
+        public File[] Files;
+
+        public bool Expanded = true;
 
         public Folder(string _fullPath, Folder _parentFolder)
         {
@@ -40,23 +50,14 @@ namespace FileSystemParser
             SubDirectories = subdirectoryFullPaths.Select(x => new Folder(x, this)).ToArray();
         }
 
-        public override string ToString()
+        public override bool IsFolder()
         {
-            return this.Name;
+            return true;
         }
     }
 
-    public class File
+    public class File : FileSystemItem
     {
-        public Folder ParentFolder;
-        public string Name;
-        public string FullPath;
-
-        public int Depth
-        {
-            get { return ParentFolder.Depth + 1; }
-        }
-
         public File(string _fullPath, Folder _parentFolder)
         {
             this.Name = Path.GetFileName(_fullPath);
@@ -66,9 +67,9 @@ namespace FileSystemParser
             Console.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
         }
 
-        public override string ToString()
+        public override bool IsFolder()
         {
-            return this.Name;
+            return false;
         }
     }
 }
