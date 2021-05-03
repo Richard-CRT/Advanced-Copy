@@ -11,8 +11,6 @@ namespace FileSystemParser
         public Folder ParentFolder;
         public string Name;
         public string FullPath;
-        public bool Excluded = false;
-        public object TreeNode;
         public abstract bool IsFolder
         {
             get;
@@ -29,11 +27,22 @@ namespace FileSystemParser
             }
         }
 
-        public FileSystemItem(string _fullPath, Folder _parentFolder)
+        public string RelativeRoot;
+        public string RelativePath;
+        public bool Excluded = false;
+        public bool PartiallyExcluded = false;
+        public object TreeNode;
+
+        public FileSystemItem(string _fullPath, string _relativeRoot, Folder _parentFolder)
         {
             this.Name = Path.GetFileName(_fullPath);
             this.FullPath = _fullPath;
             this.ParentFolder = _parentFolder;
+
+            this.RelativeRoot = _relativeRoot;
+            this.RelativePath = Path.GetRelativePath(_relativeRoot, _fullPath);
+            if (this.RelativeRoot == _fullPath)
+                throw new Exception("Full path should share root with relative root");
         }
 
         public override string ToString()
@@ -59,7 +68,7 @@ namespace FileSystemParser
             return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
         }
 
-        public Folder(string _fullPath, Folder _parentFolder) : base(_fullPath, _parentFolder)
+        public Folder(string _fullPath, string _relativeRoot, Folder _parentFolder) : base(_fullPath, _relativeRoot, _parentFolder)
         {
             Debug.WriteLine($"{new String(' ', Depth * 3)}Found folder `{Name}`");
         }
@@ -71,7 +80,7 @@ namespace FileSystemParser
             Files = new List<File>();
             foreach (string fileFullPath in filesFullPaths)
             {
-                Files.Add(new File(fileFullPath, this));
+                Files.Add(new File(fileFullPath, this.RelativeRoot, this));
             }
 
             string[] subdirectoryFullPaths = Directory.GetDirectories(this.FullPath);
@@ -81,9 +90,9 @@ namespace FileSystemParser
                 if (Path.GetFileName(subdirectoryFullPath) != "$RECYCLE.BIN")
                 {
                     if (!IsSymbolic(subdirectoryFullPath))
-                        SubDirectories.Add(new Folder(subdirectoryFullPath, this));
+                        SubDirectories.Add(new Folder(subdirectoryFullPath, this.RelativeRoot, this));
                     else
-                        Files.Add(new File(subdirectoryFullPath, this));
+                        Files.Add(new File(subdirectoryFullPath, this.RelativeRoot, this));
                 }
             }
 
@@ -98,7 +107,7 @@ namespace FileSystemParser
             get { return false; }
         }
 
-        public File(string _fullPath, Folder _parentFolder) : base(_fullPath, _parentFolder)
+        public File(string _fullPath, string _relativeRoot, Folder _parentFolder) : base(_fullPath, _relativeRoot, _parentFolder)
         {
             Debug.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
         }

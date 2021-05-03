@@ -36,6 +36,8 @@
             this.button_include = new System.Windows.Forms.Button();
             this.button_save = new System.Windows.Forms.Button();
             this.button_load = new System.Windows.Forms.Button();
+            this.button_copy = new System.Windows.Forms.Button();
+            this.button_folder = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // treeView_fileSystem
@@ -62,7 +64,7 @@
             // button_exclude
             // 
             this.button_exclude.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button_exclude.Location = new System.Drawing.Point(540, 12);
+            this.button_exclude.Location = new System.Drawing.Point(540, 41);
             this.button_exclude.Name = "button_exclude";
             this.button_exclude.Size = new System.Drawing.Size(75, 23);
             this.button_exclude.TabIndex = 1;
@@ -73,7 +75,7 @@
             // button_include
             // 
             this.button_include.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button_include.Location = new System.Drawing.Point(540, 41);
+            this.button_include.Location = new System.Drawing.Point(540, 70);
             this.button_include.Name = "button_include";
             this.button_include.Size = new System.Drawing.Size(75, 23);
             this.button_include.TabIndex = 2;
@@ -84,7 +86,7 @@
             // button_save
             // 
             this.button_save.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button_save.Location = new System.Drawing.Point(540, 99);
+            this.button_save.Location = new System.Drawing.Point(540, 128);
             this.button_save.Name = "button_save";
             this.button_save.Size = new System.Drawing.Size(75, 23);
             this.button_save.TabIndex = 3;
@@ -95,7 +97,7 @@
             // button_load
             // 
             this.button_load.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button_load.Location = new System.Drawing.Point(540, 70);
+            this.button_load.Location = new System.Drawing.Point(540, 99);
             this.button_load.Name = "button_load";
             this.button_load.Size = new System.Drawing.Size(75, 23);
             this.button_load.TabIndex = 4;
@@ -103,11 +105,33 @@
             this.button_load.UseVisualStyleBackColor = true;
             this.button_load.Click += new System.EventHandler(this.button_load_Click);
             // 
+            // button_copy
+            // 
+            this.button_copy.Location = new System.Drawing.Point(541, 158);
+            this.button_copy.Name = "button_copy";
+            this.button_copy.Size = new System.Drawing.Size(75, 23);
+            this.button_copy.TabIndex = 5;
+            this.button_copy.Text = "Copy";
+            this.button_copy.UseVisualStyleBackColor = true;
+            this.button_copy.Click += new System.EventHandler(this.button_copy_Click);
+            // 
+            // button_folder
+            // 
+            this.button_folder.Location = new System.Drawing.Point(541, 12);
+            this.button_folder.Name = "button_folder";
+            this.button_folder.Size = new System.Drawing.Size(75, 23);
+            this.button_folder.TabIndex = 6;
+            this.button_folder.Text = "Folder";
+            this.button_folder.UseVisualStyleBackColor = true;
+            this.button_folder.Click += new System.EventHandler(this.button_folder_Click);
+            // 
             // FormAdvancedCopy
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(627, 450);
+            this.Controls.Add(this.button_folder);
+            this.Controls.Add(this.button_copy);
             this.Controls.Add(this.button_load);
             this.Controls.Add(this.button_save);
             this.Controls.Add(this.button_include);
@@ -128,6 +152,8 @@
         private System.Windows.Forms.Button button_include;
         private System.Windows.Forms.Button button_save;
         private System.Windows.Forms.Button button_load;
+        private System.Windows.Forms.Button button_copy;
+        private System.Windows.Forms.Button button_folder;
     }
 }
 

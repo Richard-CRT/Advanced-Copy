@@ -25,22 +25,36 @@ namespace AdvancedCopy
 
         private void FormAdvancedCopy_Load(object sender, EventArgs e)
         {
+            if (MessageBox.Show("This utility copies files around your file system and may be full of bugs. Use at ones own discretion!", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK)
+            {
+                this.Close();
+            }
+            while (Populate() != DialogResult.OK);
+        }
+
+        private void button_folder_Click(object sender, EventArgs e)
+        {
+            Populate();
+        }
+
+        private DialogResult Populate()
+        {
             FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
             folderBrowserDialog.ShowNewFolderButton = false;
             folderBrowserDialog.Description = "Select the root folder of the Advanced Copy";
-            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            DialogResult dialogResult = folderBrowserDialog.ShowDialog();
+            if (dialogResult == DialogResult.OK)
             {
-                Folder baseFolder = new Folder(folderBrowserDialog.SelectedPath, null);
+                treeView_fileSystem.Nodes.Clear();
+
+                Folder baseFolder = new Folder(folderBrowserDialog.SelectedPath, Directory.GetParent(folderBrowserDialog.SelectedPath).FullName, null);
                 BaseFolder = baseFolder;
 
                 TreeNode rootNode = ItemToTreeNode(baseFolder);
                 treeView_fileSystem.Nodes.Add(rootNode);
                 rootNode.Expand();
             }
-            else
-            {
-                this.Close();
-            }
+            return dialogResult;
         }
 
         private TreeNode ItemToTreeNode(FileSystemItem fileSystemItem)
@@ -64,13 +78,20 @@ namespace AdvancedCopy
 
         private void CheckParentNodeForAllIncluded(TreeNode treeNode)
         {
+            bool partiallyIncluded = false;
+            bool totallyIncluded = true;
             foreach (TreeNode childTreeNode in treeNode.Nodes)
             {
                 FileSystemItem childFileSystemItem = childTreeNode.Tag as FileSystemItem;
-                if (childFileSystemItem.Excluded)
-                    return;
+                if (childFileSystemItem.Excluded || childFileSystemItem.PartiallyExcluded)
+                    totallyIncluded = false;
+                if (!childFileSystemItem.Excluded)
+                    partiallyIncluded = true;
             }
-            IncludeTreeNode(treeNode);
+            if (totallyIncluded)
+                IncludeTreeNode(treeNode);
+            else if (partiallyIncluded)
+                PartiallyIncludeTreeNode(treeNode);
         }
 
         private void IncludeTreeNode(TreeNode treeNode)
@@ -81,6 +102,24 @@ namespace AdvancedCopy
                 treeNode.NodeFont = new Font(treeNode.NodeFont, FontStyle.Regular);
                 treeNode.ForeColor = Color.Black;
                 fileSystemItem.Excluded = false;
+                fileSystemItem.PartiallyExcluded = false;
+
+                if (treeNode.Parent != null)
+                    CheckParentNodeForAllIncluded(treeNode.Parent);
+            }
+        }
+
+        private void PartiallyIncludeTreeNode(TreeNode treeNode)
+        {
+            FileSystemItem fileSystemItem = treeNode.Tag as FileSystemItem;
+            if (fileSystemItem != null)
+            {
+                if (!fileSystemItem.IsFolder)
+                    throw new Exception("Only folders should be partially included");
+                treeNode.NodeFont = new Font(treeNode.NodeFont, FontStyle.Regular);
+                treeNode.ForeColor = Color.Blue;
+                fileSystemItem.Excluded = false;
+                fileSystemItem.PartiallyExcluded = true;
 
                 if (treeNode.Parent != null)
                     CheckParentNodeForAllIncluded(treeNode.Parent);
@@ -100,13 +139,24 @@ namespace AdvancedCopy
 
         private void CheckParentNodeForAllExcluded(TreeNode treeNode)
         {
+            bool partiallyExcluded = false;
+            bool totallyExcluded = true;
             foreach (TreeNode childTreeNode in treeNode.Nodes)
             {
                 FileSystemItem childFileSystemItem = childTreeNode.Tag as FileSystemItem;
                 if (!childFileSystemItem.Excluded)
-                    return;
+                {
+                    totallyExcluded = false;
+                }
+                if (childFileSystemItem.Excluded || childFileSystemItem.PartiallyExcluded)
+                {
+                    partiallyExcluded = true;
+                }
             }
-            ExcludeTreeNode(treeNode);
+            if (totallyExcluded)
+                ExcludeTreeNode(treeNode);
+            else if (partiallyExcluded)
+                PartiallyExcludeTreeNode(treeNode);
         }
 
         private void ExcludeTreeNode(TreeNode treeNode)
@@ -117,6 +167,23 @@ namespace AdvancedCopy
                 treeNode.NodeFont = new Font(treeNode.NodeFont, FontStyle.Strikeout);
                 treeNode.ForeColor = Color.Red;
                 fileSystemItem.Excluded = true;
+                fileSystemItem.PartiallyExcluded = true;
+
+                if (treeNode.Parent != null)
+                    CheckParentNodeForAllExcluded(treeNode.Parent);
+            }
+        }
+
+        private void PartiallyExcludeTreeNode(TreeNode treeNode)
+        {
+            FileSystemItem fileSystemItem = treeNode.Tag as FileSystemItem;
+            if (fileSystemItem != null)
+            {
+                if (!fileSystemItem.IsFolder)
+                    throw new Exception("Only folders should be partially excluded");
+                treeNode.ForeColor = Color.Blue;
+                fileSystemItem.Excluded = false;
+                fileSystemItem.PartiallyExcluded = true;
 
                 if (treeNode.Parent != null)
                     CheckParentNodeForAllExcluded(treeNode.Parent);
@@ -131,6 +198,25 @@ namespace AdvancedCopy
             }
 
             ExcludeTreeNode(treeNode);
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Space))
+            {
+                TreeNode selectedTreeNode = treeView_fileSystem.SelectedNode;
+                if (selectedTreeNode != null)
+                {
+                    FileSystemItem fileSystemItem = selectedTreeNode.Tag as FileSystemItem;
+                    if (fileSystemItem.Excluded)
+                        IncludeTreeNodeRecursive(selectedTreeNode);
+                    else
+                        ExcludeTreeNodeRecursive(selectedTreeNode);
+                }
+                return true;
+            }
+            else
+                return base.ProcessCmdKey(ref msg, keyData);
         }
 
         private void button_include_Click(object sender, EventArgs e)
@@ -183,22 +269,6 @@ namespace AdvancedCopy
                 pathParts.Reverse();
                 ApplyExcludedPathRecursive(BaseFolder, pathParts);
             }
-
-            /*
-            if (fullPathsToExclude.Contains(fileSystemItem.FullPath))
-            {
-                TreeNode treeNode = fileSystemItem.TreeNode as TreeNode;
-                ExcludeTreeNodeRecursive(treeNode);
-            }
-            if (fileSystemItem.IsFolder)
-            {
-                Folder folder = fileSystemItem as Folder;
-                foreach (Folder subdirectory in folder.SubDirectories)
-                    ApplyExcludedPathsRecursive(subdirectory, fullPathsToExclude);
-                foreach (File file in folder.Files)
-                    ApplyExcludedPathsRecursive(file, fullPathsToExclude);
-            }
-            */
         }
 
         private void ApplyExcludedPathRecursive(Folder folder, List<string> pathToExcludeParts, int partIndex = 0)
@@ -290,6 +360,90 @@ namespace AdvancedCopy
         {
             TreeNode treeNode = e.Node as TreeNode;
             EnumerateTreeNode(treeNode, true);
+        }
+
+        private void button_copy_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+            folderBrowserDialog.ShowNewFolderButton = true;
+            folderBrowserDialog.Description = "Select the destination folder of the Advanced Copy";
+            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (MessageBox.Show("This will overwrite any files with the same names in the destination folder", "Overwrite", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK)
+                {
+                    CopyRecursive(BaseFolder, folderBrowserDialog.SelectedPath);
+                }
+            }
+        }
+
+        private void CopyRecursive(FileSystemItem fileSystemItem, string destination)
+        {
+            if (fileSystemItem.Excluded)
+            {
+                // skip
+            }
+            else if (fileSystemItem.PartiallyExcluded)
+            {
+                if (!fileSystemItem.IsFolder)
+                    throw new Exception("Only folders can be partially excluded");
+                // recurse
+                Folder folder = fileSystemItem as Folder;
+                foreach (Folder subdirectory in folder.SubDirectories)
+                    CopyRecursive(subdirectory, destination);
+                foreach (File file in folder.Files)
+                    CopyRecursive(file, destination);
+            }
+            else
+            {
+                string destinationPath = Path.Combine(destination, fileSystemItem.RelativePath);
+                // perform copy
+                if (fileSystemItem.IsFolder)
+                {
+                    DirectoryCopy(fileSystemItem.FullPath, destinationPath, true);
+                }
+                else
+                {
+                    string destinationFolder = Directory.GetParent(destinationPath).FullName;
+                    Directory.CreateDirectory(destinationFolder);
+                    System.IO.File.Copy(fileSystemItem.FullPath, destinationPath, true);
+                }
+            }
+        }
+
+        private void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+        {
+            // Get the subdirectories for the specified directory.
+            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+
+            if (!dir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirName);
+            }
+
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // If the destination directory doesn't exist, create it.       
+            Directory.CreateDirectory(destDirName);
+
+            // Get the files in the directory and copy them to the new location.
+            FileInfo[] files = dir.GetFiles();
+            foreach (FileInfo file in files)
+            {
+                string tempPath = Path.Combine(destDirName, file.Name);
+                file.CopyTo(tempPath, true);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location.
+            if (copySubDirs)
+            {
+                foreach (DirectoryInfo subdir in dirs)
+                {
+                    string tempPath = Path.Combine(destDirName, subdir.Name);
+                    DirectoryCopy(subdir.FullName, tempPath, copySubDirs);
+                }
+            }
         }
     }
 }
