@@ -77,6 +77,7 @@ namespace FileSystemParser
         {
             Debug.WriteLine($"{new String(' ', Depth * 3)}Enumerating folder `{Name}`");
             string[] filesFullPaths = Directory.GetFiles(this.FullPath);
+            Array.Sort(filesFullPaths, (x, y) => String.Compare(x, y));
             Files = new List<File>();
             foreach (string fileFullPath in filesFullPaths)
             {
@@ -84,6 +85,7 @@ namespace FileSystemParser
             }
 
             string[] subdirectoryFullPaths = Directory.GetDirectories(this.FullPath);
+            Array.Sort(subdirectoryFullPaths, (x, y) => String.Compare(x, y));
             SubDirectories = new List<Folder>();
             foreach (string subdirectoryFullPath in subdirectoryFullPaths)
             {

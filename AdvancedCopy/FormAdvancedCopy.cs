@@ -25,7 +25,7 @@ namespace AdvancedCopy
 
         private void FormAdvancedCopy_Load(object sender, EventArgs e)
         {
-            if (MessageBox.Show("This utility copies files around your file system and may be full of bugs. Use at ones own discretion!", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK)
+            if (MessageBox.Show("This utility copies files around your file system and may be full of bugs. Use at one's own discretion!", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK)
                 this.Close();
             else
             {

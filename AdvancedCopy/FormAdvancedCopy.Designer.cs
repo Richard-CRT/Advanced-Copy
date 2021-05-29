@@ -107,7 +107,8 @@
             // 
             // button_copy
             // 
-            this.button_copy.Location = new System.Drawing.Point(541, 158);
+            this.button_copy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button_copy.Location = new System.Drawing.Point(540, 157);
             this.button_copy.Name = "button_copy";
             this.button_copy.Size = new System.Drawing.Size(75, 23);
             this.button_copy.TabIndex = 5;
@@ -117,6 +118,7 @@
             // 
             // button_folder
             // 
+            this.button_folder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button_folder.Location = new System.Drawing.Point(541, 12);
             this.button_folder.Name = "button_folder";
             this.button_folder.Size = new System.Drawing.Size(75, 23);
