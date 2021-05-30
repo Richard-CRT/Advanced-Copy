@@ -70,12 +70,12 @@ namespace FileSystemParser
 
         public Folder(string _fullPath, string _relativeRoot, Folder _parentFolder) : base(_fullPath, _relativeRoot, _parentFolder)
         {
-            Debug.WriteLine($"{new String(' ', Depth * 3)}Found folder `{Name}`");
+            Console.WriteLine($"{new String(' ', Depth * 3)}Found folder `{Name}`");
         }
 
         public void Enumerate()
         {
-            Debug.WriteLine($"{new String(' ', Depth * 3)}Enumerating folder `{Name}`");
+            Console.WriteLine($"{new String(' ', Depth * 3)}Enumerating folder `{Name}`");
             string[] filesFullPaths = Directory.GetFiles(this.FullPath);
             Array.Sort(filesFullPaths, (x, y) => String.Compare(x, y));
             Files = new List<File>();
@@ -111,7 +111,7 @@ namespace FileSystemParser
 
         public File(string _fullPath, string _relativeRoot, Folder _parentFolder) : base(_fullPath, _relativeRoot, _parentFolder)
         {
-            Debug.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
+            Console.WriteLine($"{new String(' ', Depth * 3)}Found file `{Name}`");
         }
     }
 }

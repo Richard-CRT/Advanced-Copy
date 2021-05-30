@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -25,7 +26,7 @@ namespace AdvancedCopy
 
         private void FormAdvancedCopy_Load(object sender, EventArgs e)
         {
-            if (MessageBox.Show("This utility copies files around your file system and may be full of bugs. Use at one's own discretion!", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK)
+            if (MessageBox.Show("This utility copies files around your file system and may be full of bugs. Use at one's own discretion! Symbolic links are ignored", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK)
                 this.Close();
             else
             {
@@ -374,8 +375,15 @@ namespace AdvancedCopy
                 if (MessageBox.Show("This will overwrite any files with the same names in the destination folder", "Overwrite", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK)
                 {
                     CopyRecursive(BaseFolder, folderBrowserDialog.SelectedPath);
+                    MessageBox.Show("The copy operation has completed", "Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
+        }
+
+        private bool IsSymbolic(string fullPath)
+        {
+            FileInfo pathInfo = new FileInfo(fullPath);
+            return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
         }
 
         private void CopyRecursive(FileSystemItem fileSystemItem, string destination)
@@ -407,7 +415,11 @@ namespace AdvancedCopy
                 {
                     string destinationFolder = Directory.GetParent(destinationPath).FullName;
                     Directory.CreateDirectory(destinationFolder);
-                    System.IO.File.Copy(fileSystemItem.FullPath, destinationPath, true);
+                    if (!IsSymbolic(fileSystemItem.FullPath))
+                    {
+                        Console.WriteLine($"Copying: {fileSystemItem.FullPath}");
+                        System.IO.File.Copy(fileSystemItem.FullPath, destinationPath, true);
+                    }
                 }
             }
         }
@@ -433,8 +445,13 @@ namespace AdvancedCopy
             FileInfo[] files = dir.GetFiles();
             foreach (FileInfo file in files)
             {
-                string tempPath = Path.Combine(destDirName, file.Name);
-                file.CopyTo(tempPath, true);
+                // If not symbolic
+                if (!file.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    string tempPath = Path.Combine(destDirName, file.Name);
+                    Console.WriteLine($"Copying: {file.FullName}");
+                    file.CopyTo(tempPath, true);
+                }
             }
 
             // If copying subdirectories, copy them and their contents to new location.
